@@ -9,7 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
-import { RegisterDTO } from './dto';
+import { LoginDTO, RegisterDTO } from './dto';
 import { User } from 'src/config/entities';
 import { JwtPayload, Tokens } from 'src/config/types';
 
@@ -18,7 +18,7 @@ export class AuthService {
   constructor(
     @InjectRepository(User) private userModel: Repository<User>,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
   ) {}
 
   async register(register: RegisterDTO): Promise<User> {
@@ -55,34 +55,6 @@ export class AuthService {
     };
   }
 
-  async generateToken(id: number, email: string): Promise<Tokens> {
-    const payload: JwtPayload = { id, email };
-    const [at, rt] = await Promise.all([
-      this.jwtService.signAsync(payload, {
-        expiresIn: this.configService.get('JWT_ACCESS_EXPIRE'),
-        secret: this.configService.get('JWT_ACCESS_SECRET'),
-      }),
-      this.jwtService.signAsync(payload, {
-        expiresIn: this.configService.get('JWT_REFRESH_EXPIRE'),
-        secret: this.configService.get('JWT_REFRESH_SECRET'),
-      }),
-    ]);
-
-    return {
-      access_token: at,
-      refresh_token: rt,
-    };
-  }
-
-  async validateUser(email: string, password: string): Promise<User | null> {
-    const user = await this.userModel.findOne({ where: [{ email: email }] });
-
-    if (user && (await bcrypt.compare(password, user.password))) {
-      return user;
-    }
-    return null;
-  }
-
   async refreshTokens(
     payload: JwtPayload,
     refreshToken: string,
@@ -111,12 +83,40 @@ export class AuthService {
     };
   }
 
-  async findOne(id: number): Promise<User>{
-      return await this.userModel.findOne({ where: [{ id }] });
-  }
-
   async logout(id: number): Promise<boolean> {
     await this.userModel.update({ id }, { refreshToken: null });
     return true;
+  }
+
+  async generateToken(id: number, email: string): Promise<Tokens> {
+    const payload: JwtPayload = { id, email };
+    const [at, rt] = await Promise.all([
+      this.jwtService.signAsync(payload, {
+        expiresIn: this.configService.get('JWT_ACCESS_EXPIRE'),
+        secret: this.configService.get('JWT_ACCESS_SECRET'),
+      }),
+      this.jwtService.signAsync(payload, {
+        expiresIn: this.configService.get('JWT_REFRESH_EXPIRE'),
+        secret: this.configService.get('JWT_REFRESH_SECRET'),
+      }),
+    ]);
+
+    return {
+      access_token: at,
+      refresh_token: rt,
+    };
+  }
+
+  async validateUser(cred: LoginDTO): Promise<User | null> {
+    const user = await this.userModel.findOne({ where: [{ email: cred.email }] });
+
+    if (user && (await bcrypt.compare(cred.password, user.password))) {
+      return user;
+    }
+    return null;
+  }
+
+  async findOne(id: number): Promise<User> {
+    return await this.userModel.findOne({ where: [{ id }] });
   }
 }
