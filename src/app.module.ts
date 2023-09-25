@@ -1,13 +1,14 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_FILTER } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-import { ConfigService } from '@nestjs/config';
+// import { ConfigService } from '@nestjs/config';
 
 import { AuthModule } from './auth/auth.module';
-import { User } from './config/entities';
+// import { User } from './config/entities';
 import { AtJwtGuard } from './config/guards';
 import { TypeOrmConfigService } from './config/services';
+import { AllExceptionFilter, HttpExceptionFilter } from './config/filters';
 // import { UserInterceptor } from './interceptors';
 
 @Module({
@@ -53,6 +54,14 @@ import { TypeOrmConfigService } from './config/services';
     {
       provide: APP_GUARD,
       useClass: AtJwtGuard,
+    },    
+    // {
+    //   provide: APP_FILTER,
+    //   useClass: HttpExceptionFilter
+    // },
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionFilter
     },
     // {
     //   provide: APP_INTERCEPTOR,
