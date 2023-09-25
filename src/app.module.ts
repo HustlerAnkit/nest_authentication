@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD, APP_FILTER } from '@nestjs/core';
+import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 // import { ConfigService } from '@nestjs/config';
@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { AtJwtGuard } from './config/guards';
 import { TypeOrmConfigService } from './config/services';
 import { AllExceptionFilter, HttpExceptionFilter } from './config/filters';
+import { ResponseInterceptor } from './config/interceptors/response.interceptor';
 // import { UserInterceptor } from './interceptors';
 
 @Module({
@@ -54,7 +55,11 @@ import { AllExceptionFilter, HttpExceptionFilter } from './config/filters';
     {
       provide: APP_GUARD,
       useClass: AtJwtGuard,
-    },    
+    },  
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseInterceptor
+    },  
     // {
     //   provide: APP_FILTER,
     //   useClass: HttpExceptionFilter
