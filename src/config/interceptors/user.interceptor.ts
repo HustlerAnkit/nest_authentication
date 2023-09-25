@@ -1,5 +1,5 @@
 import { Injectable, NestInterceptor, CallHandler, ExecutionContext } from "@nestjs/common";
-import { AuthService } from "../auth/auth.service";
+import { AuthService } from "../../auth/auth.service";
 
 @Injectable()
 export class UserInterceptor implements NestInterceptor{

@@ -5,9 +5,9 @@ import { ConfigModule } from '@nestjs/config';
 import { ConfigService } from '@nestjs/config';
 
 import { AuthModule } from './auth/auth.module';
-import { User } from './entities';
-import { AtJwtGuard } from './guards';
-import { TypeOrmConfigService } from './config';
+import { User } from './config/entities';
+import { AtJwtGuard } from './config/guards';
+import { TypeOrmConfigService } from './config/services';
 // import { UserInterceptor } from './interceptors';
 
 @Module({

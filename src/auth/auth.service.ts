@@ -10,8 +10,8 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
 import { RegisterDTO } from './dto';
-import { User } from 'src/entities';
-import { JwtPayload, Tokens } from 'src/types';
+import { User } from 'src/config/entities';
+import { JwtPayload, Tokens } from 'src/config/types';
 
 @Injectable()
 export class AuthService {

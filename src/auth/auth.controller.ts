@@ -2,11 +2,11 @@ import { Body, Controller, Post, UseGuards, Req, HttpCode, HttpStatus, Get } fro
 
 import { RegisterDTO } from './dto';
 import { AuthService } from './auth.service';
-import { LocalAuthGuard, RtJwtGuard } from '../guards';
-import { JwtPayload, Tokens } from 'src/types';
-import { Publc } from 'src/decorators';
-import { User } from 'src/entities';
-import { getRequestUserData } from 'src/decorators';
+import { LocalAuthGuard, RtJwtGuard } from '../config/guards';
+import { JwtPayload, Tokens } from 'src/config/types';
+import { Publc } from 'src/config/decorators';
+import { User } from 'src/config/entities';
+import { getRequestUserData } from 'src/config/decorators';
 
 @Controller('auth')
 export class AuthController {
