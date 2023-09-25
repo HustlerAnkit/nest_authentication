@@ -4,6 +4,9 @@ import { RegisterDTO } from './dto';
 import { AuthService } from './auth.service';
 import { AtJwtGuard, LocalAuthGuard, RtJwtGuard } from '../guards';
 import { JwtPayload, Tokens } from 'src/types';
+import { Publc } from 'src/decorators';
+import { User } from 'src/entities';
+import { getRequestUserData } from 'src/decorators';
 
 @Controller('auth')
 export class AuthController {
@@ -11,34 +14,34 @@ export class AuthController {
     constructor(private readonly authService: AuthService){}
 
     @Post('register')
+    @Publc(true)
     @HttpCode(HttpStatus.CREATED)
-    signUp(@Body() details: RegisterDTO){
+    signUp(@Body() details: RegisterDTO): Promise<User>{
         return this.authService.register(details);
     }
 
-    @UseGuards(LocalAuthGuard)
     @Post('login')
+    @Publc(true)
+    @UseGuards(LocalAuthGuard)
     @HttpCode(HttpStatus.OK)
     login(@Req() req): Promise<Tokens>{
         const user = req.user;
         return this.authService.login(user.id, user.email);
     }
 
-    @UseGuards(AtJwtGuard)
     @Post('logout')
+    @UseGuards(AtJwtGuard)
     @HttpCode(HttpStatus.OK)
-    logOut(@Req() req): Promise<boolean> {
-        const id = req.user.id;
+    logOut(@getRequestUserData('id') id: number ): Promise<boolean> {
         return this.authService.logout(id);
     }
 
-    @UseGuards(RtJwtGuard)
     @Post('refresh')
+    @Publc(true)
+    @UseGuards(RtJwtGuard)
     @HttpCode(HttpStatus.OK)
-    refreshTokens(@Req() req): Promise<Tokens>{
-        const user = req.user;
-        // console.log(user);
-        const payload: JwtPayload = { id: user.id, email: user.email };
+    refreshTokens(@getRequestUserData('id') id: number, @getRequestUserData('email') email: string, @getRequestUserData() user: User): Promise<Tokens>{
+        const payload: JwtPayload = { id, email: email };
         return this.authService.refreshTokens(payload, user.refreshToken);
     }
 }
