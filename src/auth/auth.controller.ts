@@ -1,8 +1,8 @@
-import { Body, Controller, Post, UseGuards, Req, HttpCode, HttpStatus } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards, Req, HttpCode, HttpStatus, Get } from '@nestjs/common';
 
 import { RegisterDTO } from './dto';
 import { AuthService } from './auth.service';
-import { AtJwtGuard, LocalAuthGuard, RtJwtGuard } from '../guards';
+import { LocalAuthGuard, RtJwtGuard } from '../guards';
 import { JwtPayload, Tokens } from 'src/types';
 import { Publc } from 'src/decorators';
 import { User } from 'src/entities';
@@ -29,8 +29,12 @@ export class AuthController {
         return this.authService.login(user.id, user.email);
     }
 
+    @Get('detail')
+    detail(@getRequestUserData('id') id: number): Promise<User>{
+        return this.authService.findOne(id);
+    }
+
     @Post('logout')
-    @UseGuards(AtJwtGuard)
     @HttpCode(HttpStatus.OK)
     logOut(@getRequestUserData('id') id: number ): Promise<boolean> {
         return this.authService.logout(id);

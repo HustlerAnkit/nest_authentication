@@ -1,11 +1,16 @@
-import { BadRequestException, Injectable, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
 import { RegisterDTO } from './dto';
 import { User } from 'src/entities';
-import { JwtService } from '@nestjs/jwt';
 import { JwtPayload, Tokens } from 'src/types';
 
 @Injectable()
@@ -13,6 +18,7 @@ export class AuthService {
   constructor(
     @InjectRepository(User) private userModel: Repository<User>,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService
   ) {}
 
   async register(register: RegisterDTO): Promise<User> {
@@ -40,34 +46,26 @@ export class AuthService {
   }
 
   async login(id: number, email: string): Promise<Tokens> {
-    const { refresh_token: refreshToken, access_token: accessToken } = await this.generateToken(id, email);
-    await this.userModel.update(
-      { id },
-      { refreshToken },
-    );
+    const { refresh_token: refreshToken, access_token: accessToken } =
+      await this.generateToken(id, email);
+    await this.userModel.update({ id }, { refreshToken });
     return {
-        access_token: accessToken,
-        refresh_token: refreshToken
-    }
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    };
   }
 
   async generateToken(id: number, email: string): Promise<Tokens> {
-    const payload: JwtPayload = { id, email }
+    const payload: JwtPayload = { id, email };
     const [at, rt] = await Promise.all([
-      this.jwtService.signAsync(
-        payload,
-        {
-          expiresIn: '10m',
-          secret: 'at-secret',
-        },
-      ),
-      this.jwtService.signAsync(
-        payload,
-        {
-          expiresIn: '7d',
-          secret: 'rt-secret',
-        },
-      ),
+      this.jwtService.signAsync(payload, {
+        expiresIn: this.configService.get('JWT_ACCESS_EXPIRE'),
+        secret: this.configService.get('JWT_ACCESS_SECRET'),
+      }),
+      this.jwtService.signAsync(payload, {
+        expiresIn: this.configService.get('JWT_REFRESH_EXPIRE'),
+        secret: this.configService.get('JWT_REFRESH_SECRET'),
+      }),
     ]);
 
     return {
@@ -78,33 +76,43 @@ export class AuthService {
 
   async validateUser(email: string, password: string): Promise<User | null> {
     const user = await this.userModel.findOne({ where: [{ email: email }] });
-    
-    if (user && await bcrypt.compare(password, user.password)) {
+
+    if (user && (await bcrypt.compare(password, user.password))) {
       return user;
     }
     return null;
   }
 
-  async refreshTokens(payload: JwtPayload, refreshToken: string): Promise<Tokens> {
+  async refreshTokens(
+    payload: JwtPayload,
+    refreshToken: string,
+  ): Promise<Tokens> {
     const user = await this.userModel.findOne({ where: [{ id: payload.id }] });
-    
-    if(!user){
+
+    if (!user) {
       throw new ForbiddenException('Access Denied');
     }
 
-    if(user.refreshToken !== refreshToken){
+    if (user.refreshToken !== refreshToken) {
       throw new ForbiddenException('Access Denied');
     }
 
-    const { refresh_token, access_token } = await this.generateToken(payload.id, payload.email);
+    const { refresh_token, access_token } = await this.generateToken(
+      payload.id,
+      payload.email,
+    );
     await this.userModel.update(
       { id: payload.id },
       { refreshToken: refresh_token },
     );
     return {
-        access_token,
-        refresh_token
-    }
+      access_token,
+      refresh_token,
+    };
+  }
+
+  async findOne(id: number): Promise<User>{
+      return await this.userModel.findOne({ where: [{ id }] });
   }
 
   async logout(id: number): Promise<boolean> {
