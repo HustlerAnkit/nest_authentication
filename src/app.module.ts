@@ -11,6 +11,7 @@ import { TypeOrmConfigService } from './config/services';
 import { AllExceptionFilter, HttpExceptionFilter } from './config/filters';
 import { ResponseInterceptor } from './config/interceptors/response.interceptor';
 // import { UserInterceptor } from './interceptors';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { ResponseInterceptor } from './config/interceptors/response.interceptor'
       isGlobal: true
     }),
     AuthModule,
+    UserModule,
   ],
   controllers: [],
   providers: [

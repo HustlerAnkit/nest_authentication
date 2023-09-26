@@ -29,11 +29,6 @@ export class AuthController {
         return this.authService.login(user.id, user.email);
     }
 
-    @Get('detail')
-    detail(@getRequestUserData('id') id: number): Promise<User>{
-        return this.authService.findOne(id);
-    }
-
     @Post('logout')
     @HttpCode(HttpStatus.OK)
     logOut(@getRequestUserData('id') id: number ): Promise<boolean> {

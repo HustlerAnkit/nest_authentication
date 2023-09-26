@@ -14,7 +14,7 @@ export class ResponseInterceptor implements NestInterceptor {
       .handle()
       .pipe(
         map((data) => ({
-          status: HttpStatus.OK,
+          success: true,
           timestamp: new Date().toISOString(),
           ...{ data },
         })),

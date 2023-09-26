@@ -115,8 +115,4 @@ export class AuthService {
     }
     return null;
   }
-
-  async findOne(id: number): Promise<User> {
-    return await this.userModel.findOne({ where: [{ id }] });
-  }
 }
