@@ -1,5 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Follower } from './follower.entity';
+import { Post } from './post.entiry';
+import { PostComment } from './post-comment.entity';
+import { PostLike } from './post-like.entity';
+import { PostReport } from './post-report.entity';
 @Entity({ name: 'users' })
 export class User{
     @PrimaryGeneratedColumn({ type: 'bigint'})
@@ -17,11 +21,11 @@ export class User{
     @Column({ nullable: true })
     refreshToken?: string;
 
-    @Column()
-    createdAt: Date;
+    @CreateDateColumn({ type: "timestamp"})
+    createdAt: Date
 
-    @Column()
-    updatedAt: Date;
+    @UpdateDateColumn({ type: "timestamp"})
+    updatedAt: Date
 
     // @OneToMany(type => Follower, follower => follower.user_id)
     // followers: Follower[]
@@ -37,4 +41,28 @@ export class User{
         onUpdate: 'CASCADE'
     })
     following: Follower[]
+
+    @OneToMany(() => Post, (posts: Post) => posts.user, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
+    })
+    posts: Post[]
+
+    @OneToMany(() => PostComment, (postComments: PostComment) => postComments.user, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
+    })
+    postComments: PostComment[]
+
+    @OneToMany(() => PostLike, (PostLikes: PostLike) => PostLikes.user, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
+    })
+    PostLikes: PostLike[]
+
+    @OneToMany(() => PostReport, (PostReports: PostReport) => PostReports.user, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
+    })
+    PostReports: PostReport[]
 }

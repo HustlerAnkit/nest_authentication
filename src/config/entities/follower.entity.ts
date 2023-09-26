@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { User } from "./user.entity";
 
 @Entity({ name: 'followers' })
@@ -12,15 +12,15 @@ export class Follower {
     @Column()
     followerId: number
 
-    @Column()
+    @CreateDateColumn({ type: "timestamp"})
     createdAt: Date
 
-    @Column()
+    @UpdateDateColumn({ type: "timestamp"})
     updatedAt: Date
 
-    @ManyToOne(() => User, (user) => user.followers)
+    @ManyToOne(() => User, (user: User) => user.followers)
     follower: User
 
-    @ManyToOne(() => User, (user) => user.following)
+    @ManyToOne(() => User, (user: User) => user.following)
     following: User
 }

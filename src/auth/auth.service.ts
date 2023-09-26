@@ -38,9 +38,7 @@ export class AuthService {
     const hashedPass = await bcrypt.hash(register.password, genSalt);
     register.password = hashedPass;
     const newUser = this.userModel.create({
-      ...register,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      ...register
     });
     return await this.userModel.save(newUser);
   }

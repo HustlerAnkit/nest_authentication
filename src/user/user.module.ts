@@ -7,6 +7,7 @@ import { Follower, User } from 'src/config/entities';
 @Module({
   imports: [TypeOrmModule.forFeature([ User, Follower ])],
   controllers: [UserController],
-  providers: [UserService]
+  providers: [UserService],
+  exports: [UserService]
 })
 export class UserModule {}

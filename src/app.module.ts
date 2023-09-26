@@ -12,6 +12,7 @@ import { AllExceptionFilter, HttpExceptionFilter } from './config/filters';
 import { ResponseInterceptor } from './config/interceptors/response.interceptor';
 // import { UserInterceptor } from './interceptors';
 import { UserModule } from './user/user.module';
+import { PostModule } from './post/post.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { UserModule } from './user/user.module';
     }),
     AuthModule,
     UserModule,
+    PostModule,
   ],
   controllers: [],
   providers: [

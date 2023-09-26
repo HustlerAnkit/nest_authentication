@@ -14,16 +14,17 @@ export class UserService {
     @InjectRepository(Follower) private followerModel: Repository<Follower>,
   ) {}
 
-  async findOne(id: number): Promise<User | null> {
-    return await this.userModel.findOne({
+  async findOne(id: number): Promise<User> {
+    const user =  await this.userModel.findOne({
       where: [{ id }],
       relations: ['followers', 'followers.follower', 'following', 'following.following'],
     });
+    if (!user) throw new NotFoundException('User not found.');
+    return user;
   }
 
   async follow(followerId: number, userId: number): Promise<boolean> {
-    const user = await this.findOne(userId);
-    if (!user) throw new NotFoundException('User not found.');
+    await this.findOne(userId);
     const alreadyFollow = await this.followerModel.findOne({
       where: [{  followingId: userId, followerId }],
     });
@@ -31,17 +32,14 @@ export class UserService {
       throw new BadRequestException('User is already being followed.');
     const newFollower = this.followerModel.create({
       followingId: userId,
-      followerId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      followerId
     });
     await this.followerModel.save(newFollower);
     return true;
   }
 
   async unfollow(followerId: number, userId: number): Promise<boolean> {
-    const user = await this.findOne(userId);
-    if (!user) throw new NotFoundException('User not found.');
+    await this.findOne(userId);
     const check = await this.followerModel.findOne({
       where: [{ followingId: userId, followerId }],
     });
@@ -55,8 +53,7 @@ export class UserService {
   }
 
   async followers(userId: number): Promise<Follower[] | []> {
-    const user = await this.findOne(userId);
-    if (!user) throw new NotFoundException('User not found.');
+    await this.findOne(userId);
     const followers = await this.followerModel.find({
       where: [{ followingId: userId }],
       relations: ['follower'],
@@ -65,8 +62,7 @@ export class UserService {
   }
 
   async following(userId: number): Promise<Follower[] | []>{
-    const user = await this.findOne(userId);
-    if(!user) throw new NotFoundException('User not found.');
+    await this.findOne(userId);
     const following = await this.followerModel.find({
         where: [{ followerId: userId }],
         relations: ['following'],

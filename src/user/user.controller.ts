@@ -13,7 +13,7 @@ export class UserController {
     }
 
     @Get(':id')
-    userDetail(@Param('id', ParseIntPipe) id: number ): Promise<User | null>{
+    userDetail(@Param('id', ParseIntPipe) id: number ): Promise<User>{
         return this.userService.findOne(id);
     }
 
