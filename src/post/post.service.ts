@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
-  ParseIntPipe,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -10,8 +9,7 @@ import {
   Post,
   PostComment,
   PostLike,
-  PostReport,
-  User,
+  PostReport
 } from 'src/config/entities';
 import { Repository } from 'typeorm';
 import { CommentPostDTO, CreatePostDTO } from './dto';
@@ -20,7 +18,6 @@ import { CommentPostDTO, CreatePostDTO } from './dto';
 export class PostService {
   constructor(
     @InjectRepository(Post) private readonly postModel: Repository<Post>,
-    @InjectRepository(User) private readonly userModel: Repository<User>,
     @InjectRepository(PostLike)
     private readonly likeModel: Repository<PostLike>,
     @InjectRepository(PostComment)

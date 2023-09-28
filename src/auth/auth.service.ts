@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  BadGatewayException,
   Injectable,
   ForbiddenException,
 } from '@nestjs/common';
@@ -9,9 +10,11 @@ import { ConfigService } from '@nestjs/config';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
-import { LoginDTO, RegisterDTO } from './dto';
+import { LoginDTO, RegisterDTO, verifyAccountDTO } from './dto';
 import { User } from 'src/config/entities';
 import { JwtPayload, Tokens } from 'src/config/types';
+import { MailService } from 'src/mail/mail.service';
+import { HashService, OtpService } from 'src/config/services';
 
 @Injectable()
 export class AuthService {
@@ -19,9 +22,12 @@ export class AuthService {
     @InjectRepository(User) private userModel: Repository<User>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly mailService: MailService,
+    private readonly otpService: OtpService,
+    private readonly hashService: HashService
   ) {}
 
-  async register(register: RegisterDTO): Promise<User> {
+  async register(register: RegisterDTO): Promise<{ hash: string }> {
     const unique = await this.userModel.findOne({
       where: [{ username: register.username }, { email: register.email }],
     });
@@ -40,7 +46,50 @@ export class AuthService {
     const newUser = this.userModel.create({
       ...register
     });
-    return await this.userModel.save(newUser);
+    const user = await this.userModel.save(newUser);
+
+    const otp = this.otpService.generateOtp();
+    const ttl = this.configService.get('OTP_EXPIRATION_SECONDS', 60) * 1000;
+    const expiresIn = Date.now() + ttl;
+    const toHash = `${user.email}.${otp}.${expiresIn}`;
+    const hash = this.hashService.hashOtp(toHash);
+
+    await this.mailService.sendVerificationOTP(user, otp);
+
+    return { hash: `${hash}.${expiresIn}` }
+  }
+
+  async verify(hash: string, cred: verifyAccountDTO): Promise<boolean>{
+    const [hashedOtp, expiresIn] = hash.split('.');
+    if(Date.now() > +expiresIn){
+      throw new BadRequestException('OTP is already expired.')
+    }
+    const toHash = `${cred.email}.${cred.otp}.${expiresIn}`;
+    const isValid = this.otpService.verifyOtp(toHash, hashedOtp);
+    if(!isValid) throw new BadRequestException('Invalid OTP.')
+
+    const user = await this.userModel.findOne({ where: [{ email: cred.email }]});
+    if(!user) throw new BadRequestException('Oops... something unexpected happend.')
+
+    await this.userModel.update({ id: user.id }, {
+      emailVerifiedAt: new Date()
+    });
+    return true;
+  }
+
+  async resendOtp(email: string): Promise<{ hash: string }>{
+      const user = await this.userModel.findOneBy({ email });
+      if(!user) throw new BadRequestException('No user found.')
+
+      const otp = this.otpService.generateOtp();
+      const ttl = this.configService.get('OTP_EXPIRATION_SECONDS', 60) * 1000;
+      const expiresIn = Date.now() + ttl;
+      const toHash = `${user.email}.${otp}.${expiresIn}`;
+      const hash = this.hashService.hashOtp(toHash);
+
+      await this.mailService.sendVerificationOTP(user, otp);
+
+      return { hash: `${hash}.${expiresIn}` }
   }
 
   async login(id: number, email: string): Promise<Tokens> {
@@ -107,9 +156,11 @@ export class AuthService {
 
   async validateUser(cred: LoginDTO): Promise<User | null> {
     const user = await this.userModel.findOne({ where: [{ email: cred.email }] });
-
-    if (user && (await bcrypt.compare(cred.password, user.password))) {
-      return user;
+    if(user) {
+      if(!user.emailVerifiedAt) throw new BadRequestException('Please verify your account first.');
+      if (await bcrypt.compare(cred.password, user.password)) {
+        return user;
+      }
     }
     return null;
   }

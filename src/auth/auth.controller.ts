@@ -1,12 +1,12 @@
-import { Body, Controller, Post, UseGuards, Req, HttpCode, HttpStatus, Get } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards, Req, HttpCode, HttpStatus, Param, BadRequestException } from '@nestjs/common';
 
-import { RegisterDTO } from './dto';
-import { AuthService } from './auth.service';
-import { LocalAuthGuard, RtJwtGuard } from '../config/guards';
-import { JwtPayload, Tokens } from 'src/config/types';
-import { Publc } from 'src/config/decorators';
 import { User } from 'src/config/entities';
+import { LocalAuthGuard, RtJwtGuard } from '../config/guards';
+import { AuthService } from './auth.service';
+import { Publc } from 'src/config/decorators';
 import { getRequestUserData } from 'src/config/decorators';
+import { RegisterDTO, verifyAccountDTO } from './dto';
+import { JwtPayload, Tokens } from 'src/config/types';
 
 @Controller('auth')
 export class AuthController {
@@ -16,8 +16,23 @@ export class AuthController {
     @Post('register')
     @Publc(true)
     @HttpCode(HttpStatus.CREATED)
-    signUp(@Body() details: RegisterDTO): Promise<User>{
+    signUp(@Body() details: RegisterDTO): Promise<{ hash: string }>{
         return this.authService.register(details);
+    }
+
+    @Post('verify-account/:hash')
+    @Publc(true)
+    @HttpCode(HttpStatus.OK)
+    verify(@Param('hash') hash: string, @Body() cred: verifyAccountDTO): Promise<boolean>{
+        return this.authService.verify(hash, cred);
+    }
+
+    @Post('resend-otp')
+    @Publc(true)
+    @HttpCode(HttpStatus.OK)
+    resendOtp(@Body('email') email: string ): Promise<{ hash: string }>{
+        if(!email) throw new BadRequestException('Email field is required.');
+        return this.authService.resendOtp(email);
     }
 
     @Post('login')

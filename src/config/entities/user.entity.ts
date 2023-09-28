@@ -21,6 +21,9 @@ export class User{
     @Column({ nullable: true })
     refreshToken?: string;
 
+    @Column({ type: 'timestamp', nullable: true })
+    emailVerifiedAt?: Date;
+
     @CreateDateColumn({ type: "timestamp"})
     createdAt: Date
 

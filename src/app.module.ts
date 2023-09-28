@@ -13,6 +13,7 @@ import { ResponseInterceptor } from './config/interceptors/response.interceptor'
 // import { UserInterceptor } from './interceptors';
 import { UserModule } from './user/user.module';
 import { PostModule } from './post/post.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { PostModule } from './post/post.module';
     AuthModule,
     UserModule,
     PostModule,
+    MailModule,
   ],
   controllers: [],
   providers: [
