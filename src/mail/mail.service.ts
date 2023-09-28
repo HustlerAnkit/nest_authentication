@@ -15,7 +15,8 @@ export class MailService {
             template: 'verify-account',
             context: {
                 name: user.username,
-                otp
+                otp,
+                appName: this.configService.get('APP_NAME')
             }
         })
     }

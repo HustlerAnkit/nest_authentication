@@ -4,14 +4,16 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Follower, User } from 'src/config/entities';
+import { Follower, User, UserProfile } from 'src/config/entities';
 import { Repository } from 'typeorm';
+import { UserDetailsDTO } from './dto';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private userModel: Repository<User>,
     @InjectRepository(Follower) private followerModel: Repository<Follower>,
+    @InjectRepository(UserProfile) private userProfileModel: Repository<UserProfile>
   ) {}
 
   async findOne(id: number): Promise<User> {
@@ -68,5 +70,33 @@ export class UserService {
         relations: ['following'],
     })
     return following;
+  }
+
+  async updateProfile(userId: number, userDetail: UserDetailsDTO, files: { profile: Express.Multer.File, cover: Express.Multer.File }): Promise<boolean>{
+      // console.log(files.profile[0].path, files.cover[0].path);
+      const user = await this.findOne(userId);
+      if(!user.profile) {
+        const newProfile = this.userProfileModel.create({
+            address: userDetail.address,
+            city: userDetail.city,
+            state: userDetail?.state,
+            country: userDetail.country,
+            profileSource: files.profile[0].path,
+            coverSource: files.cover[0].path,
+            user
+        })
+        const profile = await this.userProfileModel.save(newProfile);
+        await this.userModel.update({ id: user.id }, { profile });
+      } else {
+        await this.userProfileModel.update({ user }, {
+          address: userDetail.address,
+          city: userDetail.city,
+          state: userDetail?.state,
+          country: userDetail.country,
+          profileSource: files.profile[0].path,
+          coverSource: files.cover[0].path,
+        });
+      }
+      return true;
   }
 }

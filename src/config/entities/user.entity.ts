@@ -1,9 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn, OneToOne, JoinColumn } from 'typeorm';
 import { Follower } from './follower.entity';
 import { Post } from './post.entiry';
 import { PostComment } from './post-comment.entity';
 import { PostLike } from './post-like.entity';
 import { PostReport } from './post-report.entity';
+import { UserProfile } from './user-profile.entity';
 @Entity({ name: 'users' })
 export class User{
     @PrimaryGeneratedColumn({ type: 'bigint'})
@@ -32,6 +33,10 @@ export class User{
 
     // @OneToMany(type => Follower, follower => follower.user_id)
     // followers: Follower[]
+
+    @OneToOne(() => UserProfile)
+    @JoinColumn()
+    profile: UserProfile
 
     @OneToMany(() => Follower, (followers: Follower) => followers.following, {
         onDelete: 'CASCADE',
